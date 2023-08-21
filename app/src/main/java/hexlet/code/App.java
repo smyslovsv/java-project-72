@@ -2,6 +2,11 @@ package hexlet.code;
 
 import io.javalin.Javalin;
 
+import io.javalin.rendering.template.JavalinThymeleaf;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
+import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
 public class App {
 
     private static int getPort() {
@@ -16,11 +21,26 @@ public class App {
         return getMode().equals("production");
     }
 
+    private static TemplateEngine getTemplateEngine() {
+        TemplateEngine templateEngine = new TemplateEngine();
+
+        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        templateResolver.setPrefix("/templates/");
+
+        templateEngine.addTemplateResolver(templateResolver);
+        templateEngine.addDialect(new LayoutDialect());
+        templateEngine.addDialect(new Java8TimeDialect());
+
+        return templateEngine;
+    }
+
     private static Javalin getApp() {
         Javalin app = Javalin.create(config -> {
             if (!isProduction()) {
                 config.plugins.enableDevLogging();
             }
+            config.staticFiles.enableWebjars();
+            JavalinThymeleaf.init(getTemplateEngine());
         });
         // Описываем что загрузится по адресу /
         app.get("/", ctx -> ctx.result("Hello World"));
